@@ -99,6 +99,25 @@ object ApiClient {
         }
     }
 
+    suspend fun getProfileViewedByMe(clientId: String, token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
+        return try {
+            val clientId = "13267262-7f38-44a8-bd96-0f92259dae39"
+            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$clientId") {
+                contentType(ContentType.Application.Json)
+                header("Authorization", "Bearer $token")
+                setBody(request)
+            }
+            if (response.status.isSuccess()) {
+                Result.success(response.body())
+            } else {
+                val errorBody = response.bodyAsText()
+                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getMutualMatches(candidateId: String, token: String, request: MyMatchesRequest): Result<MyMatchesResponse> {
         return try {
             val response = client.post("$BASE_URL/candidate/search/V4/mutual/0/$candidateId/1") {

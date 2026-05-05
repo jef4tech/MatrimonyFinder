@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 fun DashboardScreen(
     onNavigateToMyMatches: () -> Unit,
     onNavigateToWhoViewedMe: () -> Unit,
+    onNavigateToProfileViewedByMe: () -> Unit,
     onNavigateToMutualMatches: () -> Unit,
     onNavigateToNewlyJoined: () -> Unit,
     onLogout: () -> Unit
@@ -41,12 +42,12 @@ fun DashboardScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
                     title = "My Matches",
-                    modifier = Modifier.weight(1f).height(200.dp),
+                    modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToMyMatches
                 )
                 DashboardCard(
                     title = "Who Viewed Me",
-                    modifier = Modifier.weight(1f).height(200.dp),
+                    modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToWhoViewedMe
                 )
             }
@@ -54,14 +55,23 @@ fun DashboardScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
                     title = "Mutual Matches",
-                    modifier = Modifier.weight(1f).height(200.dp),
+                    modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToMutualMatches
                 )
                 DashboardCard(
                     title = "Newly Joined Profiles",
-                    modifier = Modifier.weight(1f).height(200.dp),
+                    modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToNewlyJoined
                 )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                DashboardCard(
+                    title = "Viewed By Me",
+                    modifier = Modifier.weight(1f).height(150.dp),
+                    onClick = onNavigateToProfileViewedByMe
+                )
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
@@ -92,6 +102,7 @@ fun DashboardScreenPreview() {
         DashboardScreen(
             onNavigateToMyMatches = {},
             onNavigateToWhoViewedMe = {},
+            onNavigateToProfileViewedByMe = {},
             onNavigateToMutualMatches = {},
             onNavigateToNewlyJoined = {},
             onLogout = {}

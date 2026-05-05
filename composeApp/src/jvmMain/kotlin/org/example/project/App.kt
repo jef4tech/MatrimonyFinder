@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 val prefs = Preferences.userRoot().node("org.example.project.MatrimonyFinder")
 
 enum class Route {
-    Login, Dashboard, MyMatches, WhoViewedMe, MutualMatches, NewlyJoined
+    Login, Dashboard, MyMatches, WhoViewedMe, ProfileViewedByMe, MutualMatches, NewlyJoined
 }
 
 @Composable
@@ -65,6 +65,7 @@ fun App() {
                     DashboardScreen(
                         onNavigateToMyMatches = { currentRoute = Route.MyMatches },
                         onNavigateToWhoViewedMe = { currentRoute = Route.WhoViewedMe },
+                        onNavigateToProfileViewedByMe = { currentRoute = Route.ProfileViewedByMe },
                         onNavigateToMutualMatches = { currentRoute = Route.MutualMatches },
                         onNavigateToNewlyJoined = { currentRoute = Route.NewlyJoined },
                         onLogout = { handleLogout() }
@@ -80,6 +81,14 @@ fun App() {
                 }
                 Route.WhoViewedMe -> {
                     WhoViewedMeScreen(
+                        token = token,
+                        onBack = { currentRoute = Route.Dashboard },
+                        onLogout = { handleLogout() }
+                    )
+                }
+                Route.ProfileViewedByMe -> {
+                    ProfileViewedByMeScreen(
+                        clientId = candidateId,
                         token = token,
                         onBack = { currentRoute = Route.Dashboard },
                         onLogout = { handleLogout() }

@@ -2,6 +2,7 @@ package org.example.project
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -44,6 +47,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.skia.Image as SkiaImage
@@ -141,7 +146,7 @@ fun MyMatchesScreenContent(
                 )
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
+                    columns = GridCells.Adaptive(minSize = 200.dp),
                     modifier = Modifier.fillMaxSize().padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -157,10 +162,16 @@ fun MyMatchesScreenContent(
 
 @Composable
 fun MatchCard(match: MatchItem) {
+    var showDialog by remember { mutableStateOf(false) }
+    val photoUrl = match.photos?.candidatePhotos?.firstOrNull()?.displayPhotoUrl
+
     Card(
-        modifier = Modifier.fillMaxWidth().aspectRatio(1f)
+        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable {
+            if (!photoUrl.isNullOrEmpty()) {
+                showDialog = true
+            }
+        }
     ) {
-        val photoUrl = match.photos?.candidatePhotos?.firstOrNull()?.displayPhotoUrl
         if (!photoUrl.isNullOrEmpty()) {
             AsyncImage(
                 url = photoUrl,
@@ -172,12 +183,33 @@ fun MatchCard(match: MatchItem) {
             )
         }
     }
+
+    if (showDialog && !photoUrl.isNullOrEmpty()) {
+        val details = CandidateDetails(
+            profileId = match.profileId ?: "Unknown",
+            age = match.age,
+            height = match.heightInCentimeter,
+            education = match.educationDetails,
+            profession = match.profession?.details,
+            location = listOfNotNull(match.workingState, match.workingCountry).joinToString(", ").takeIf { it.isNotBlank() },
+            isPremium = match.isPremium ?: false
+        )
+        FullScreenImageDialog(
+            url = photoUrl,
+            details = details,
+            onDismiss = { showDialog = false }
+        )
+    }
 }
 
 @Composable
-fun AsyncImage(url: String, modifier: Modifier = Modifier) {
+fun AsyncImage(
+    url: String,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Crop
+) {
     var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-    
+
     LaunchedEffect(url) {
         withContext(Dispatchers.IO) {
             try {
@@ -189,16 +221,100 @@ fun AsyncImage(url: String, modifier: Modifier = Modifier) {
             }
         }
     }
-    
+
     if (imageBitmap != null) {
         Image(
             bitmap = imageBitmap!!,
             contentDescription = "Profile Photo",
             modifier = modifier,
-            contentScale = ContentScale.Crop
+            contentScale = contentScale
         )
     } else {
         Box(modifier = modifier.background(Color.LightGray))
+    }
+}
+
+data class CandidateDetails(
+    val profileId: String,
+    val age: Int?,
+    val height: Int?,
+    val education: String?,
+    val profession: String?,
+    val location: String?,
+    val isPremium: Boolean
+)
+
+@Composable
+fun FullScreenImageDialog(url: String, details: CandidateDetails?, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.9f))
+                .clickable { onDismiss() }
+        ) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                // Left Side: Image (75%)
+                Box(
+                    modifier = Modifier
+                        .weight(0.75f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        url = url,
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+
+                // Right Side: Details (25%)
+                if (details != null) {
+                    Box(
+                        modifier = Modifier
+                            .weight(0.25f)
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(24.dp)
+                            .clickable(enabled = false) {} // Prevent dismiss when clicking details
+                    ) {
+                        Column {
+                            Text(
+                                text = "Profile Details",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "ID: ${details.profileId}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                                if (details.isPremium) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Badge(containerColor = MaterialTheme.colorScheme.primary) { 
+                                        Text("Premium", color = MaterialTheme.colorScheme.onPrimary) 
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(text = "Age: ${details.age ?: "N/A"} yrs", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(text = "Height: ${details.height ?: "N/A"} cm", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(text = "Education: ${details.education ?: "N/A"}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(text = "Profession: ${details.profession ?: "N/A"}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(text = "Location: ${details.location ?: "N/A"}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+                } else {
+                    // Fill space if no details
+                    Spacer(modifier = Modifier.weight(0.25f))
+                }
+            }
+        }
     }
 }
 
@@ -235,6 +351,26 @@ fun MyMatchesScreenPreview() {
             ),
             onLogout = {},
             onBack = {}
+        )
+    }
+}
+
+@androidx.compose.desktop.ui.tooling.preview.Preview
+@Composable
+fun FullScreenImageDialogPreview() {
+    MaterialTheme {
+        FullScreenImageDialog(
+            url = "https://via.placeholder.com/400",
+            details = CandidateDetails(
+                profileId = "CHV12345",
+                age = 28,
+                height = 175,
+                education = "B.Tech",
+                profession = "Software Engineer",
+                location = "Kerala, India",
+                isPremium = true
+            ),
+            onDismiss = {}
         )
     }
 }

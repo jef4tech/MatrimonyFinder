@@ -41,12 +41,12 @@ fun DashboardScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
                     title = "My Matches",
-                    modifier = Modifier.weight(1f).aspectRatio(1f),
+                    modifier = Modifier.weight(1f).height(200.dp),
                     onClick = onNavigateToMyMatches
                 )
                 DashboardCard(
                     title = "Who Viewed Me",
-                    modifier = Modifier.weight(1f).aspectRatio(1f),
+                    modifier = Modifier.weight(1f).height(200.dp),
                     onClick = onNavigateToWhoViewedMe
                 )
             }
@@ -54,12 +54,12 @@ fun DashboardScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
                     title = "Mutual Matches",
-                    modifier = Modifier.weight(1f).aspectRatio(1f),
+                    modifier = Modifier.weight(1f).height(200.dp),
                     onClick = onNavigateToMutualMatches
                 )
                 DashboardCard(
                     title = "Newly Joined Profiles",
-                    modifier = Modifier.weight(1f).aspectRatio(1f),
+                    modifier = Modifier.weight(1f).height(200.dp),
                     onClick = onNavigateToNewlyJoined
                 )
             }

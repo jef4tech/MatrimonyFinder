@@ -1,6 +1,7 @@
 package org.example.project
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
@@ -78,7 +79,7 @@ fun WhoViewedMeScreen(
                 )
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 150.dp),
+                    columns = GridCells.Adaptive(minSize = 200.dp),
                     modifier = Modifier.fillMaxSize().padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -94,10 +95,16 @@ fun WhoViewedMeScreen(
 
 @Composable
 fun WhoViewedCard(view: ProfileViewItem) {
+    var showDialog by remember { mutableStateOf(false) }
+    val photoUrl = view.candidate?.photo?.candidatePhotos?.firstOrNull()?.displayPhotoUrl
+
     Card(
-        modifier = Modifier.fillMaxWidth().aspectRatio(1f)
+        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable {
+            if (!photoUrl.isNullOrEmpty()) {
+                showDialog = true
+            }
+        }
     ) {
-        val photoUrl = view.candidate?.photo?.candidatePhotos?.firstOrNull()?.displayPhotoUrl
         if (!photoUrl.isNullOrEmpty()) {
             AsyncImage(
                 url = photoUrl,
@@ -111,5 +118,24 @@ fun WhoViewedCard(view: ProfileViewItem) {
                 Text("No Photo")
             }
         }
+    }
+    
+    if (showDialog && !photoUrl.isNullOrEmpty()) {
+        val details = view.candidate?.let { candidate ->
+            CandidateDetails(
+                profileId = candidate.profileId ?: "Unknown",
+                age = candidate.age,
+                height = candidate.heightInCentimeter,
+                education = candidate.educationDetails,
+                profession = candidate.profession?.details,
+                location = candidate.branch,
+                isPremium = candidate.isPremium ?: false
+            )
+        }
+        FullScreenImageDialog(
+            url = photoUrl,
+            details = details,
+            onDismiss = { showDialog = false }
+        )
     }
 }

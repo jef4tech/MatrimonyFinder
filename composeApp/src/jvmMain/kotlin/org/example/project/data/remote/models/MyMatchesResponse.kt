@@ -19,13 +19,17 @@ data class MatchItem(
     val profession: Profession? = null,
     val workingState: String? = null,
     val workingCountry: String? = null,
-    val photos: Photos? = null
+    val photos: Photos? = null,
+    val messageStatus: MessageStatus? = null
 )
 
 @Serializable
 data class Profession(
+    val name: String? = null,
+    val organization: String? = null,
     val details: String? = null,
-    val organization: String? = null
+    val workingPlace: String? = null,
+    val professionName: String? = null
 )
 
 @Serializable
@@ -36,4 +40,14 @@ data class Photos(
 @Serializable
 data class CandidatePhoto(
     val displayPhotoUrl: String? = null
+)
+
+@Serializable
+data class MessageStatus(
+    val colour: String? = null,
+    val code: String? = null,
+    val message: String? = null,
+    val isExpired: Boolean? = null,
+    val warning: String? = null,
+    val cometId: String? = null
 )

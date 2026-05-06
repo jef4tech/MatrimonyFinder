@@ -110,15 +110,22 @@ fun WhoViewedCard(view: ProfileViewItem) {
     }
     
     if (showDialog && !photoUrl.isNullOrEmpty()) {
-        val details = view.candidate?.let { candidate ->
+        val details = view.candidate.let { candidate ->
             CandidateDetails(
                 profileId = candidate.profileId ?: "Unknown",
                 age = candidate.age,
                 height = candidate.heightInCentimeter,
                 education = candidate.educationDetails,
-                profession = candidate.profession?.details,
+                profession = listOfNotNull(
+                    candidate.profession?.professionName,
+                    candidate.profession?.name,
+                    candidate.profession?.details,
+                    candidate.profession?.organization,
+                    candidate.profession?.workingPlace
+                ).filter { it.isNotBlank() }.joinToString(" • ").takeIf { it.isNotBlank() },
                 location = candidate.branch,
-                isPremium = candidate.isPremium ?: false
+                isPremium = candidate.isPremium ?: false,
+                message = candidate.messageStatus?.message
             )
         }
         FullScreenImageDialog(

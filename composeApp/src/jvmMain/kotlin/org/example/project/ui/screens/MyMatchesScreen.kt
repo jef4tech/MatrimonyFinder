@@ -172,7 +172,8 @@ fun MatchCard(match: MatchItem) {
             education = match.educationDetails,
             profession = match.profession?.details,
             location = listOfNotNull(match.workingState, match.workingCountry).joinToString(", ").takeIf { it.isNotBlank() },
-            isPremium = match.isPremium ?: false
+            isPremium = match.isPremium ?: false,
+            message = match.messageStatus?.message
         )
         FullScreenImageDialog(
             url = photoUrl,
@@ -221,7 +222,8 @@ data class CandidateDetails(
     val education: String?,
     val profession: String?,
     val location: String?,
-    val isPremium: Boolean
+    val isPremium: Boolean,
+    val message: String? = null
 )
 
 @Composable
@@ -287,6 +289,10 @@ fun FullScreenImageDialog(url: String, details: CandidateDetails?, onDismiss: ()
                             Text(text = "Profession: ${details.profession ?: "N/A"}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(text = "Location: ${details.location ?: "N/A"}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            if (!details.message.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(text = "Message: ${details.message}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            }
                         }
                     }
                 } else {

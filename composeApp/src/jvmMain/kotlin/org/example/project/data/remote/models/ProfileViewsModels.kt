@@ -44,9 +44,10 @@ data class ViewedCandidate(
     val religion: String? = null,
     val educationDetails: String? = null,
     val profession: Profession? = null,
+    val messageStatus: MessageStatus? = null,
     val isOnline: Boolean? = null,
     val isPremium: Boolean? = null,
-    val branch: String? = null
+    val branch: String? = null,
 )
 
 @Serializable

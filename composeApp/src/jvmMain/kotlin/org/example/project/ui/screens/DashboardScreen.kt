@@ -1,4 +1,6 @@
-package org.example.project
+package org.example.project.ui.screens
+import org.example.project.data.remote.models.*
+import org.example.project.ui.viewmodels.*
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -109,3 +111,4 @@ fun DashboardScreenPreview() {
         )
     }
 }
+

@@ -1,4 +1,6 @@
-package org.example.project
+package org.example.project.ui.screens
+import org.example.project.data.remote.models.*
+import org.example.project.ui.viewmodels.*
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,15 +9,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun LoginScreen(onLoginSuccess: (LoginResponse) -> Unit) {
-    var userId by remember { mutableStateOf("CM975223") }
-    var password by remember { mutableStateOf("jeffin123!") }
-    var isLoading by remember { mutableStateOf(false) }
-    var resultMessage by remember { mutableStateOf<String?>(null) }
-    val coroutineScope = rememberCoroutineScope()
+fun LoginScreen(
+    viewModel: LoginViewModel = koinViewModel(),
+    onLoginSuccess: (LoginResponse) -> Unit
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.loginSuccess) {
+        state.loginSuccess?.let {
+            onLoginSuccess(it)
+            viewModel.onEvent(LoginEvent.ResetSuccessState)
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -36,8 +45,8 @@ fun LoginScreen(onLoginSuccess: (LoginResponse) -> Unit) {
             Spacer(modifier = Modifier.height(32.dp))
             
             OutlinedTextField(
-                value = userId,
-                onValueChange = { userId = it },
+                value = state.userId,
+                onValueChange = { viewModel.onEvent(LoginEvent.OnUserIdChange(it)) },
                 label = { Text("User ID") },
                 modifier = Modifier.fillMaxWidth(0.5f),
                 singleLine = true
@@ -46,8 +55,8 @@ fun LoginScreen(onLoginSuccess: (LoginResponse) -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             
             OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = state.password,
+                onValueChange = { viewModel.onEvent(LoginEvent.OnPasswordChange(it)) },
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(0.5f),
                 singleLine = true,
@@ -57,24 +66,11 @@ fun LoginScreen(onLoginSuccess: (LoginResponse) -> Unit) {
             Spacer(modifier = Modifier.height(32.dp))
             
             Button(
-                onClick = {
-                    isLoading = true
-                    resultMessage = null
-                    coroutineScope.launch {
-                        val request = LoginRequest(userId = userId, password = password)
-                        val result = ApiClient.login(request)
-                        if (result.isSuccess) {
-                            onLoginSuccess(result.getOrThrow())
-                        } else {
-                            resultMessage = "Error: ${result.exceptionOrNull()?.message}"
-                        }
-                        isLoading = false
-                    }
-                },
+                onClick = { viewModel.onEvent(LoginEvent.OnLoginClick) },
                 modifier = Modifier.fillMaxWidth(0.5f),
-                enabled = !isLoading && userId.isNotBlank() && password.isNotBlank()
+                enabled = !state.isLoading && state.userId.isNotBlank() && state.password.isNotBlank()
             ) {
-                if (isLoading) {
+                if (state.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp), 
                         color = MaterialTheme.colorScheme.onPrimary
@@ -84,7 +80,7 @@ fun LoginScreen(onLoginSuccess: (LoginResponse) -> Unit) {
                 }
             }
             
-            resultMessage?.let {
+            state.resultMessage?.let {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = it, 
@@ -95,3 +91,4 @@ fun LoginScreen(onLoginSuccess: (LoginResponse) -> Unit) {
         }
     }
 }
+

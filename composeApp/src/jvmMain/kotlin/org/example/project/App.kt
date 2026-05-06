@@ -1,8 +1,16 @@
 package org.example.project
+import org.example.project.data.remote.models.*
+import org.example.project.ui.screens.*
+import org.example.project.navigation.*
+import org.example.project.di.appModule
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import org.koin.compose.KoinApplication
 
 import java.util.prefs.Preferences
 import kotlinx.serialization.encodeToString
@@ -10,103 +18,111 @@ import kotlinx.serialization.json.Json
 
 val prefs = Preferences.userRoot().node("org.example.project.MatrimonyFinder")
 
-enum class Route {
-    Login, Dashboard, MyMatches, WhoViewedMe, ProfileViewedByMe, MutualMatches, NewlyJoined
-}
-
 @Composable
 @Preview
 fun App() {
-    var loggedInUser by remember { 
-        mutableStateOf<LoginResponse?>(
-            try {
-                val jsonStr = prefs.get("auth_user", null)
-                if (jsonStr != null) {
-                    val json = Json { ignoreUnknownKeys = true }
-                    json.decodeFromString<LoginResponse>(jsonStr)
-                } else null
-            } catch (e: Exception) {
-                null
-            }
-        )
-    }
-    var currentRoute by remember { mutableStateOf(if (loggedInUser != null) Route.Dashboard else Route.Login) }
-
-    fun handleLogout() {
-        loggedInUser = null
-        prefs.remove("auth_user")
-        currentRoute = Route.Login
-    }
-
-    MaterialTheme {
-        if (loggedInUser == null) {
-            LoginScreen(onLoginSuccess = { response -> 
-                loggedInUser = response 
+    KoinApplication(application = {
+        modules(appModule)
+    }) {
+        var loggedInUser by remember { 
+            mutableStateOf<LoginResponse?>(
                 try {
-                    val json = Json { ignoreUnknownKeys = true }
-                    // Remove large json elements to fit in Windows Registry Preferences limit (8192 bytes)
-                    val slimResponse = response.copy(user = null, policyInfo = null)
-                    prefs.put("auth_user", json.encodeToString(slimResponse))
+                    val jsonStr = prefs.get("auth_user", null)
+                    if (jsonStr != null) {
+                        val json = Json { ignoreUnknownKeys = true }
+                        json.decodeFromString<LoginResponse>(jsonStr)
+                    } else null
                 } catch (e: Exception) {
-                    System.err.println("Failed to save auth_user to preferences: ${e.message}")
-                    e.printStackTrace()
+                    null
                 }
-                currentRoute = Route.Dashboard
-            })
-        } else {
-            val token = loggedInUser!!.token ?: ""
-            val candidateId = loggedInUser!!.candidates?.firstOrNull()?.id ?: ""
-            
-            when (currentRoute) {
-                Route.Login -> {
-                    currentRoute = Route.Dashboard
+            )
+        }
+
+        val navController = rememberNavController()
+
+        fun handleLogout() {
+            loggedInUser = null
+            prefs.remove("auth_user")
+            navController.navigate(LoginRoute) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+
+        MaterialTheme {
+            val startDestination = if (loggedInUser != null) DashboardRoute else LoginRoute
+
+            NavHost(navController = navController, startDestination = startDestination) {
+                composable<LoginRoute> {
+                    LoginScreen(
+                        onLoginSuccess = { response -> 
+                            loggedInUser = response 
+                            try {
+                                val json = Json { ignoreUnknownKeys = true }
+                                // Remove large json elements to fit in Windows Registry Preferences limit (8192 bytes)
+                                val slimResponse = response.copy(user = null, policyInfo = null)
+                                prefs.put("auth_user", json.encodeToString(slimResponse))
+                            } catch (e: Exception) {
+                                System.err.println("Failed to save auth_user to preferences: ${e.message}")
+                                e.printStackTrace()
+                            }
+                            navController.navigate(DashboardRoute) {
+                                popUpTo(LoginRoute) { inclusive = true }
+                            }
+                        }
+                    )
                 }
-                Route.Dashboard -> {
+
+                composable<DashboardRoute> {
                     DashboardScreen(
-                        onNavigateToMyMatches = { currentRoute = Route.MyMatches },
-                        onNavigateToWhoViewedMe = { currentRoute = Route.WhoViewedMe },
-                        onNavigateToProfileViewedByMe = { currentRoute = Route.ProfileViewedByMe },
-                        onNavigateToMutualMatches = { currentRoute = Route.MutualMatches },
-                        onNavigateToNewlyJoined = { currentRoute = Route.NewlyJoined },
+                        onNavigateToMyMatches = { navController.navigate(MyMatchesRoute) },
+                        onNavigateToWhoViewedMe = { navController.navigate(WhoViewedMeRoute) },
+                        onNavigateToProfileViewedByMe = { navController.navigate(ProfileViewedByMeRoute) },
+                        onNavigateToMutualMatches = { navController.navigate(MutualMatchesRoute) },
+                        onNavigateToNewlyJoined = { navController.navigate(NewlyJoinedRoute) },
                         onLogout = { handleLogout() }
                     )
                 }
-                Route.MyMatches -> {
+
+                composable<MyMatchesRoute> {
                     MyMatchesScreen(
-                        token = token, 
-                        candidateId = candidateId,
-                        onBack = { currentRoute = Route.Dashboard },
+                        token = loggedInUser?.token ?: "",
+                        candidateId = loggedInUser?.candidates?.firstOrNull()?.id ?: "",
+                        onBack = { navController.popBackStack() },
                         onLogout = { handleLogout() }
                     )
                 }
-                Route.WhoViewedMe -> {
+
+                composable<WhoViewedMeRoute> {
                     WhoViewedMeScreen(
-                        token = token,
-                        onBack = { currentRoute = Route.Dashboard },
+                        token = loggedInUser?.token ?: "",
+                        onBack = { navController.popBackStack() },
                         onLogout = { handleLogout() }
                     )
                 }
-                Route.ProfileViewedByMe -> {
+
+                composable<ProfileViewedByMeRoute> {
                     ProfileViewedByMeScreen(
-                        clientId = candidateId,
-                        token = token,
-                        onBack = { currentRoute = Route.Dashboard },
+                        clientId = loggedInUser?.candidates?.firstOrNull()?.id ?: "",
+                        token = loggedInUser?.token ?: "",
+                        onBack = { navController.popBackStack() },
                         onLogout = { handleLogout() }
                     )
                 }
-                Route.MutualMatches -> {
+
+                composable<MutualMatchesRoute> {
                     MutualMatchesScreen(
-                        token = token,
-                        candidateId = candidateId,
-                        onBack = { currentRoute = Route.Dashboard },
+                        token = loggedInUser?.token ?: "",
+                        candidateId = loggedInUser?.candidates?.firstOrNull()?.id ?: "",
+                        onBack = { navController.popBackStack() },
                         onLogout = { handleLogout() }
                     )
                 }
-                Route.NewlyJoined -> {
+
+                composable<NewlyJoinedRoute> {
                     NewlyJoinedScreen(
-                        token = token,
-                        candidateId = candidateId,
-                        onBack = { currentRoute = Route.Dashboard },
+                        token = loggedInUser?.token ?: "",
+                        candidateId = loggedInUser?.candidates?.firstOrNull()?.id ?: "",
+                        onBack = { navController.popBackStack() },
                         onLogout = { handleLogout() }
                     )
                 }

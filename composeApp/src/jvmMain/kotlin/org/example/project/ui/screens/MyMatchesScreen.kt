@@ -1,4 +1,6 @@
-package org.example.project
+package org.example.project.ui.screens
+import org.example.project.data.remote.models.*
+import org.example.project.ui.viewmodels.*
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,11 +37,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,45 +58,22 @@ import org.jetbrains.skia.Image as SkiaImage
 
 @Composable
 fun MyMatchesScreen(
+    viewModel: MyMatchesViewModel = koinViewModel(),
     token: String,
     candidateId: String,
     onLogout: () -> Unit,
     onBack: () -> Unit
 ) {
-    var matches by remember { mutableStateOf<List<MatchItem>?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val coroutineScope = rememberCoroutineScope()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        val request = MyMatchesRequest(
-            sort = listOf(SortOption("subscriptionStart", "Date Joined", 1, true)),
-            filters = MatchFilters(
-                profileOptions = ProfileOptions(
-                    isAlreadySeen = true,
-                    isAlreadyContacted = true,
-                    isInterestSent = true,
-                    isShortListed = true,
-                    isWithPhoto = false,
-                    isOnline = false,
-                    isPremium = false
-                )
-            ),
-            pagination = Pagination(1, 500)
-        )
-        val result = ApiClient.getMyMatches(candidateId, token, request)
-        if (result.isSuccess) {
-            matches = result.getOrNull()?.items ?: emptyList()
-        } else {
-            errorMessage = result.exceptionOrNull()?.message ?: "Failed to load matches"
-        }
-        isLoading = false
+        viewModel.onEvent(MyMatchesEvent.LoadMatches(candidateId, token))
     }
 
     MyMatchesScreenContent(
-        isLoading = isLoading,
-        errorMessage = errorMessage,
-        matches = matches,
+        isLoading = state.isLoading,
+        errorMessage = state.errorMessage,
+        matches = state.matches,
         onLogout = onLogout,
         onBack = onBack
     )
@@ -374,3 +354,4 @@ fun FullScreenImageDialogPreview() {
         )
     }
 }
+

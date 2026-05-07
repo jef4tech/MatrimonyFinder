@@ -68,7 +68,24 @@ fun ProfileViewedByMeScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
+                val gridState = rememberLazyGridState()
+                val isLoadingMore = state.isLoadingMore
+                val hasMore = state.hasMore
+                val shouldLoadMore by remember(hasMore, isLoadingMore) {
+                    derivedStateOf {
+                        val info = gridState.layoutInfo
+                        val total = info.totalItemsCount
+                        val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: -1
+                        total > 0 && lastVisible >= total - 4
+                    }
+                }
+                LaunchedEffect(shouldLoadMore, hasMore, isLoadingMore) {
+                    if (shouldLoadMore && hasMore && !isLoadingMore) {
+                        viewModel.onEvent(ProfileViewedByMeEvent.LoadMore(clientId, token))
+                    }
+                }
                 LazyVerticalGrid(
+                    state = gridState,
                     columns = GridCells.Adaptive(minSize = 200.dp),
                     modifier = Modifier.fillMaxSize().padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -76,6 +93,16 @@ fun ProfileViewedByMeScreen(
                 ) {
                     items(state.views) { view ->
                         WhoViewedCard(view)
+                    }
+                    if (isLoadingMore) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
                     }
                 }
             }

@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material.icons.Icons
@@ -40,6 +42,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
@@ -77,6 +80,9 @@ fun MyMatchesScreen(
         isLoading = state.isLoading,
         errorMessage = state.errorMessage,
         matches = state.matches,
+        isLoadingMore = state.isLoadingMore,
+        hasMore = state.hasMore,
+        onLoadMore = { viewModel.onEvent(MyMatchesEvent.LoadMore(candidateId, token)) },
         onLogout = onLogout,
         onBack = onBack
     )
@@ -88,6 +94,9 @@ fun MyMatchesScreenContent(
     isLoading: Boolean,
     errorMessage: String?,
     matches: List<MatchItem>?,
+    isLoadingMore: Boolean = false,
+    hasMore: Boolean = false,
+    onLoadMore: () -> Unit = {},
     onLogout: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -128,7 +137,22 @@ fun MyMatchesScreenContent(
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
+                val gridState = rememberLazyGridState()
+                val shouldLoadMore by remember(hasMore, isLoadingMore) {
+                    derivedStateOf {
+                        val info = gridState.layoutInfo
+                        val total = info.totalItemsCount
+                        val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: -1
+                        total > 0 && lastVisible >= total - 4
+                    }
+                }
+                LaunchedEffect(shouldLoadMore, hasMore, isLoadingMore) {
+                    if (shouldLoadMore && hasMore && !isLoadingMore) {
+                        onLoadMore()
+                    }
+                }
                 LazyVerticalGrid(
+                    state = gridState,
                     columns = GridCells.Adaptive(minSize = 200.dp),
                     modifier = Modifier.fillMaxSize().padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -136,6 +160,16 @@ fun MyMatchesScreenContent(
                 ) {
                     items(matches) { match ->
                         MatchCard(match)
+                    }
+                    if (isLoadingMore) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
                     }
                 }
             }

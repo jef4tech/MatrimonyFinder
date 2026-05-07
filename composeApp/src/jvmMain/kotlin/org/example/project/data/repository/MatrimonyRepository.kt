@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.serialization.json.Json
 import org.example.project.data.remote.models.*
 
 interface MatrimonyRepository {
@@ -14,6 +15,7 @@ interface MatrimonyRepository {
     suspend fun getProfileViewedByMe(clientId: String, token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse>
     suspend fun getMutualMatches(candidateId: String, token: String, request: MyMatchesRequest): Result<MyMatchesResponse>
     suspend fun getNewlyJoinedProfiles(candidateId: String, token: String, request: NewlyJoinedRequest): Result<MyMatchesResponse>
+    suspend fun getCandidateViewCounts(token: String): Result<List<CandidateViewCount>>
 }
 
 class MatrimonyRepositoryImpl(
@@ -148,4 +150,24 @@ class MatrimonyRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    override suspend fun getCandidateViewCounts(token: String): Result<List<CandidateViewCount>> {
+        return try {
+            val response = client.get("$BASE_URL/CandidateView/client/count") {
+                header("Authorization", "Bearer $token")
+                header("accept", "application/octet-stream")
+            }
+            if (response.status.isSuccess()) {
+                val text = response.bodyAsText()
+                Result.success(countsJson.decodeFromString(text))
+            } else {
+                val errorBody = response.bodyAsText()
+                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private val countsJson = Json { ignoreUnknownKeys = true; isLenient = true }
 }

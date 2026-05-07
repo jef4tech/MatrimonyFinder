@@ -25,6 +25,9 @@ fun MutualMatchesScreen(
         isLoading = state.isLoading,
         errorMessage = state.errorMessage,
         matches = state.matches,
+        isLoadingMore = state.isLoadingMore,
+        hasMore = state.hasMore,
+        onLoadMore = { viewModel.onEvent(MutualMatchesEvent.LoadMore(candidateId, token)) },
         onLogout = onLogout,
         onBack = onBack
     )

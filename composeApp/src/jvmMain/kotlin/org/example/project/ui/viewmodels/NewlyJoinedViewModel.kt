@@ -50,7 +50,7 @@ class NewlyJoinedViewModel(
                         isPremium = false
                     )
                 ),
-                pagination = Pagination(1, 500),
+                pagination = Pagination(1, 1000),
                 sort = listOf(SortOption("loginDate", "Last Login Date", 2, true)),
                 handleDuplicationByLogin = java.time.Instant.now().toString()
             )

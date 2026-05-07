@@ -16,6 +16,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,7 +112,7 @@ fun WhoViewedCard(view: ProfileViewItem) {
             }
         }
     }
-    
+
     if (showDialog && !photoUrl.isNullOrEmpty()) {
         val details = view.candidate.let { candidate ->
             CandidateDetails(
@@ -125,7 +129,17 @@ fun WhoViewedCard(view: ProfileViewItem) {
                 ).filter { it.isNotBlank() }.joinToString(" • ").takeIf { it.isNotBlank() },
                 location = candidate.branch,
                 isPremium = candidate.isPremium ?: false,
-                message = candidate.messageStatus?.message
+                message = candidate.messageStatus?.message,
+                activityLog = view.activityLog
+                    ?.mapNotNull { log ->
+                        val text = log.activity?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                        ActivityEntry(
+                            activity = text,
+                            timestamp = formatActivityTimestamp(log.activityTimeStamp),
+                            by = log.activityBy?.takeIf { it.isNotBlank() }
+                        )
+                    }
+                    ?.takeIf { it.isNotEmpty() }
             )
         }
         FullScreenImageDialog(
@@ -135,4 +149,17 @@ fun WhoViewedCard(view: ProfileViewItem) {
         )
     }
 }
+
+private val activityDateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale.ENGLISH)
+
+private fun formatActivityTimestamp(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+    return try {
+        Instant.parse(raw).atZone(ZoneId.systemDefault()).format(activityDateFormatter)
+    } catch (e: Exception) {
+        raw
+    }
+}
+
 

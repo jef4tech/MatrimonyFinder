@@ -49,7 +49,7 @@ class MyMatchesViewModel(
                         isPremium = false
                     )
                 ),
-                pagination = Pagination(1, 500)
+                pagination = Pagination(1, 1000)
             )
             val result = repository.getMyMatches(candidateId, token, request)
             if (result.isSuccess) {

@@ -49,7 +49,7 @@ class MutualMatchesViewModel(
                         isPremium = false
                     )
                 ),
-                pagination = Pagination(1, 500)
+                pagination = Pagination(1, 1000)
             )
             val result = repository.getMutualMatches(candidateId, token, request)
             if (result.isSuccess) {

@@ -5,6 +5,9 @@ import org.example.project.ui.viewmodels.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -223,7 +226,14 @@ data class CandidateDetails(
     val profession: String?,
     val location: String?,
     val isPremium: Boolean,
-    val message: String? = null
+    val message: String? = null,
+    val activityLog: List<ActivityEntry>? = null
+)
+
+data class ActivityEntry(
+    val activity: String,
+    val timestamp: String? = null,
+    val by: String? = null
 )
 
 @Composable
@@ -263,7 +273,7 @@ fun FullScreenImageDialog(url: String, details: CandidateDetails?, onDismiss: ()
                             .padding(24.dp)
                             .clickable(enabled = false) {} // Prevent dismiss when clicking details
                     ) {
-                        Column {
+                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                             Text(
                                 text = "Profile Details",
                                 style = MaterialTheme.typography.headlineSmall,
@@ -274,8 +284,8 @@ fun FullScreenImageDialog(url: String, details: CandidateDetails?, onDismiss: ()
                                 Text(text = "ID: ${details.profileId}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                                 if (details.isPremium) {
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Badge(containerColor = MaterialTheme.colorScheme.primary) { 
-                                        Text("Premium", color = MaterialTheme.colorScheme.onPrimary) 
+                                    Badge(containerColor = MaterialTheme.colorScheme.primary) {
+                                        Text("Premium", color = MaterialTheme.colorScheme.onPrimary)
                                     }
                                 }
                             }
@@ -292,6 +302,33 @@ fun FullScreenImageDialog(url: String, details: CandidateDetails?, onDismiss: ()
                             if (!details.message.isNullOrBlank()) {
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(text = "Message: ${details.message}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            }
+                            if (!details.activityLog.isNullOrEmpty()) {
+                                Spacer(modifier = Modifier.height(20.dp))
+                                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Activity",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                details.activityLog.forEach { entry ->
+                                    Text(
+                                        text = entry.activity,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    val sub = listOfNotNull(entry.timestamp, entry.by).joinToString(" • ")
+                                    if (sub.isNotBlank()) {
+                                        Text(
+                                            text = sub,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
                             }
                         }
                     }

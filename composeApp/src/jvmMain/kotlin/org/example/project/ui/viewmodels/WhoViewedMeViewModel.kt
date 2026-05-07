@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneOffset
 
 data class WhoViewedMeState(
     val views: List<ProfileViewItem> = emptyList(),
@@ -36,11 +38,13 @@ class WhoViewedMeViewModel(
     private fun loadViews(token: String) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
+            val now = Instant.now()
+            val threeYearsAgo = now.atZone(ZoneOffset.UTC).minusYears(3).toInstant()
             val request = ProfileViewsRequest(
-                pagination = Pagination(1, 500),
+                pagination = Pagination(1, 1000),
                 filters = ProfileViewsFilters(
-                    fromTimeStamp = "2023-01-01T00:00:00.000Z",
-                    toTimeStamp = "2026-01-01T00:00:00.000Z",
+                    fromTimeStamp = threeYearsAgo.toString(),
+                    toTimeStamp = now.toString(),
                     availableProfilesOnly = true
                 )
             )

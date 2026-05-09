@@ -15,6 +15,8 @@ data class MatchItem(
     val age: Int? = null,
     val heightInCentimeter: Int? = null,
     val isPremium: Boolean? = null,
+    val isOnline: Boolean? = null,
+    val religion: String? = null,
     val educationDetails: String? = null,
     val profession: Profession? = null,
     val workingState: String? = null,

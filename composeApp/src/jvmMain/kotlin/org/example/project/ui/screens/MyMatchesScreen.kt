@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.Arrangement
@@ -206,10 +207,12 @@ fun MatchCard(match: MatchItem) {
             profileId = match.profileId ?: "Unknown",
             age = match.age,
             height = match.heightInCentimeter,
+            religion = match.religion,
             education = match.educationDetails,
             profession = match.profession?.details,
             location = listOfNotNull(match.workingState, match.workingCountry).joinToString(", ").takeIf { it.isNotBlank() },
             isPremium = match.isPremium ?: false,
+            isOnline = match.isOnline ?: false,
             message = match.messageStatus?.message
         )
         FullScreenImageDialog(
@@ -256,10 +259,12 @@ data class CandidateDetails(
     val profileId: String,
     val age: Int?,
     val height: Int?,
+    val religion: String?,
     val education: String?,
     val profession: String?,
     val location: String?,
     val isPremium: Boolean,
+    val isOnline: Boolean,
     val message: String? = null,
     val activityLog: List<ActivityEntry>? = null
 )
@@ -316,6 +321,12 @@ fun FullScreenImageDialog(url: String, details: CandidateDetails?, onDismiss: ()
                             Spacer(modifier = Modifier.height(24.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(text = "ID: ${details.profileId}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(if (details.isOnline) Color.Green else Color.Red, shape = CircleShape)
+                                )
                                 if (details.isPremium) {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Badge(containerColor = MaterialTheme.colorScheme.primary) {
@@ -325,6 +336,8 @@ fun FullScreenImageDialog(url: String, details: CandidateDetails?, onDismiss: ()
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(text = "Age: ${details.age ?: "N/A"} yrs", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(text = "Religion: ${details.religion ?: "N/A"}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(text = "Height: ${details.height ?: "N/A"} cm", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.height(12.dp))
@@ -389,6 +402,8 @@ fun MyMatchesScreenPreview() {
                     age = 28,
                     heightInCentimeter = 170,
                     isPremium = true,
+                    isOnline = true,
+                    religion = "Christian",
                     educationDetails = "B.Tech",
                     profession = Profession("Software Engineer", "Tech Corp"),
                     workingState = "Kerala",
@@ -400,6 +415,8 @@ fun MyMatchesScreenPreview() {
                     age = 25,
                     heightInCentimeter = 162,
                     isPremium = false,
+                    isOnline = false,
+                    religion = "Muslim",
                     educationDetails = "MBBS",
                     profession = Profession("Doctor", "City Hospital"),
                     workingState = "Karnataka",
@@ -422,10 +439,12 @@ fun FullScreenImageDialogPreview() {
                 profileId = "CHV12345",
                 age = 28,
                 height = 175,
+                religion = "Hindu",
                 education = "B.Tech",
                 profession = "Software Engineer",
                 location = "Kerala, India",
-                isPremium = true
+                isPremium = true,
+                isOnline = true
             ),
             onDismiss = {}
         )

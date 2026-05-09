@@ -156,7 +156,9 @@ fun WhoViewedCard(view: ProfileViewItem) {
                 ).filter { it.isNotBlank() }.joinToString(" • ").takeIf { it.isNotBlank() },
                 location = candidate.branch,
                 isPremium = candidate.isPremium ?: false,
+                isOnline = candidate.isOnline ?: false,
                 message = candidate.messageStatus?.message,
+                religion = candidate.religion,
                 activityLog = view.activityLog
                     ?.mapNotNull { log ->
                         val text = log.activity?.takeIf { it.isNotBlank() } ?: return@mapNotNull null

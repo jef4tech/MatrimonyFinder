@@ -26,7 +26,6 @@ class MatrimonyRepositoryImpl(
     private val client: HttpClient
 ) : MatrimonyRepository {
     companion object {
-        private const val BASE_URL = "https://finder-api.chavaramatrimony.com"
         private const val CLIENT_NAME_PROFILE_VIEWS = "Profile Views"
         private const val CLIENT_NAME_PROFILES_VIEWED_BY_ME = "Profiles Viewed By Me"
         private const val CLIENT_NAME_CONTACT_VIEWS = "Contact Views"
@@ -54,13 +53,11 @@ class MatrimonyRepositoryImpl(
     }
 
     override suspend fun login(request: LoginRequest): Result<LoginResponse> {
-        return try {
-            val response = client.post("$BASE_URL/Auth/login-v2") {
-                contentType(ContentType.Application.Json)
+        return safeApiCall<LoginResponse> {
+            client.post("Auth/login-v2") {
                 header("accept", "application/json, text/plain, */*")
                 header("accept-language", "en,en;q=0.9,en;q=0.8")
                 header("priority", "u=1, i")
-                header("productcode", "fdae621a-9655-4c5f-b9ba-a4c51fabd5ae")
 //                header("sec-ch-ua", "\"Not:A-Brand\";v=\"99\", \"Brave\";v=\"145\", \"Chromium\";v=\"145\"")
 //                header("sec-ch-ua-mobile", "?0")
 //                header("sec-ch-ua-platform", "\"Windows\"")
@@ -71,162 +68,63 @@ class MatrimonyRepositoryImpl(
 //                header("referrer", "https://www.chavaramatrimony.com/")
                 setBody(request)
             }
-            
-            if (response.status.isSuccess()) {
-                val result = response.body<LoginResponse>()
-                if (result.success == true) {
-                    Result.success(result)
-                } else {
-                    Result.failure(Exception(result.message ?: "Login failed"))
-                }
-            } else {
-                val errorBody = response.bodyAsText()
-                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        }.fold(
+            onSuccess = { if (it.success == true) Result.success(it) else Result.failure(Exception(it.message ?: "Login failed")) },
+            onFailure = { Result.failure(it) }
+        )
     }
 
-    override suspend fun getMyMatches(candidateId: String, token: String, request: MyMatchesRequest): Result<MyMatchesResponse> {
-        return try {
-            val response = client.post("$BASE_URL/candidate/search/V4/myMatch/0/$candidateId/1") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $token")
-                setBody(request)
-            }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                val errorBody = response.bodyAsText()
-                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+    override suspend fun getMyMatches(candidateId: String, token: String, request: MyMatchesRequest): Result<MyMatchesResponse> =
+        safeApiCall {
+            client.post("candidate/search/V4/myMatch/0/$candidateId/1") { setBody(request) }
         }
-    }
 
-    override suspend fun getProfileViews(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
-        return try {
+    override suspend fun getProfileViews(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> =
+        safeApiCall {
             val code = resolveClientCode(token, CLIENT_NAME_PROFILE_VIEWS)
-            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $token")
-                setBody(request)
-            }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                val errorBody = response.bodyAsText()
-                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+            client.put("CandidateView/v1/list/client/$code") { setBody(request) }
         }
-    }
 
-    override suspend fun getProfileViewedByMe(clientId: String, token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
-        return try {
+    override suspend fun getProfileViewedByMe(clientId: String, token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> =
+        safeApiCall {
             val code = resolveClientCode(token, CLIENT_NAME_PROFILES_VIEWED_BY_ME)
-            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $token")
-                setBody(request)
-            }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                val errorBody = response.bodyAsText()
-                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+            client.put("CandidateView/v1/list/client/$code") { setBody(request) }
         }
-    }
 
-    override suspend fun getContactViews(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
-        return try {
+    override suspend fun getContactViews(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> =
+        safeApiCall {
             val code = resolveClientCode(token, CLIENT_NAME_CONTACT_VIEWS)
-            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $token")
-                setBody(request)
-            }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                val errorBody = response.bodyAsText()
-                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+            client.put("CandidateView/v1/list/client/$code") { setBody(request) }
         }
-    }
 
-    override suspend fun getContactsViewedByMe(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
-        return try {
+    override suspend fun getContactsViewedByMe(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> =
+        safeApiCall {
             val code = resolveClientCode(token, CLIENT_NAME_CONTACTS_VIEWED_BY_ME)
-            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $token")
-                setBody(request)
-            }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                val errorBody = response.bodyAsText()
-                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+            client.put("CandidateView/v1/list/client/$code") { setBody(request) }
         }
-    }
 
-    override suspend fun getMutualMatches(candidateId: String, token: String, request: MyMatchesRequest): Result<MyMatchesResponse> {
-        return try {
-            val response = client.post("$BASE_URL/candidate/search/V4/mutual/0/$candidateId/1") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $token")
-                setBody(request)
-            }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                val errorBody = response.bodyAsText()
-                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+    override suspend fun getMutualMatches(candidateId: String, token: String, request: MyMatchesRequest): Result<MyMatchesResponse> =
+        safeApiCall {
+            client.post("candidate/search/V4/mutual/0/$candidateId/1") { setBody(request) }
         }
-    }
 
-    override suspend fun getNewlyJoinedProfiles(candidateId: String, token: String, request: NewlyJoinedRequest): Result<MyMatchesResponse> {
-        return try {
-            val response = client.post("$BASE_URL/candidate/search/v1/preference/V4/0/$candidateId/1") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $token")
-                setBody(request)
-            }
-            if (response.status.isSuccess()) {
-                Result.success(response.body())
-            } else {
-                val errorBody = response.bodyAsText()
-                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+    override suspend fun getNewlyJoinedProfiles(candidateId: String, token: String, request: NewlyJoinedRequest): Result<MyMatchesResponse> =
+        safeApiCall {
+            client.post("candidate/search/v1/preference/V4/0/$candidateId/1") { setBody(request) }
         }
-    }
 
-    override suspend fun getCandidateViewCounts(token: String): Result<List<CandidateViewCount>> {
-        return try {
-            val response = client.get("$BASE_URL/CandidateView/client/count") {
-                header("Authorization", "Bearer $token")
+    override suspend fun getCandidateViewCounts(token: String): Result<List<CandidateViewCount>> =
+        safeApiCall {
+            client.get("CandidateView/client/count") {
                 header("accept", "application/octet-stream")
             }
+        }
+
+    private suspend inline fun <reified T> safeApiCall(apiCall: suspend () -> HttpResponse): Result<T> {
+        return try {
+            val response = apiCall()
             if (response.status.isSuccess()) {
-                val text = response.bodyAsText()
-                Result.success(countsJson.decodeFromString(text))
+                Result.success(response.body<T>())
             } else {
                 val errorBody = response.bodyAsText()
                 Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
@@ -235,6 +133,4 @@ class MatrimonyRepositoryImpl(
             Result.failure(e)
         }
     }
-
-    private val countsJson = Json { ignoreUnknownKeys = true; isLenient = true }
 }

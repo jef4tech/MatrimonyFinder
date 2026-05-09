@@ -18,6 +18,8 @@ interface MatrimonyRepository {
     suspend fun getMutualMatches(candidateId: String, token: String, request: MyMatchesRequest): Result<MyMatchesResponse>
     suspend fun getNewlyJoinedProfiles(candidateId: String, token: String, request: NewlyJoinedRequest): Result<MyMatchesResponse>
     suspend fun getCandidateViewCounts(token: String): Result<List<CandidateViewCount>>
+    suspend fun getContactViews(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse>
+    suspend fun getContactsViewedByMe(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse>
 }
 
 class MatrimonyRepositoryImpl(
@@ -27,6 +29,8 @@ class MatrimonyRepositoryImpl(
         private const val BASE_URL = "https://finder-api.chavaramatrimony.com"
         private const val CLIENT_NAME_PROFILE_VIEWS = "Profile Views"
         private const val CLIENT_NAME_PROFILES_VIEWED_BY_ME = "Profiles Viewed By Me"
+        private const val CLIENT_NAME_CONTACT_VIEWS = "Contact Views"
+        private const val CLIENT_NAME_CONTACTS_VIEWED_BY_ME = "Contacts Viewed By Me"
     }
 
     private var cachedClientCounts: List<CandidateViewCount>? = null
@@ -124,6 +128,44 @@ class MatrimonyRepositoryImpl(
     override suspend fun getProfileViewedByMe(clientId: String, token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
         return try {
             val code = resolveClientCode(token, CLIENT_NAME_PROFILES_VIEWED_BY_ME)
+            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
+                contentType(ContentType.Application.Json)
+                header("Authorization", "Bearer $token")
+                setBody(request)
+            }
+            if (response.status.isSuccess()) {
+                Result.success(response.body())
+            } else {
+                val errorBody = response.bodyAsText()
+                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getContactViews(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
+        return try {
+            val code = resolveClientCode(token, CLIENT_NAME_CONTACT_VIEWS)
+            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
+                contentType(ContentType.Application.Json)
+                header("Authorization", "Bearer $token")
+                setBody(request)
+            }
+            if (response.status.isSuccess()) {
+                Result.success(response.body())
+            } else {
+                val errorBody = response.bodyAsText()
+                Result.failure(Exception("HTTP ${response.status.value} - $errorBody"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getContactsViewedByMe(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
+        return try {
+            val code = resolveClientCode(token, CLIENT_NAME_CONTACTS_VIEWED_BY_ME)
             val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Bearer $token")

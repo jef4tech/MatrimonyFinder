@@ -22,3 +22,9 @@ data object MutualMatchesRoute
 
 @Serializable
 data object NewlyJoinedRoute
+
+@Serializable
+data object ContactViewsRoute
+
+@Serializable
+data object ContactsViewedByMeRoute

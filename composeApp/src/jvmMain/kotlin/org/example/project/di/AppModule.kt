@@ -40,4 +40,6 @@ val appModule = module {
     viewModelOf(::ProfileViewedByMeViewModel)
     viewModelOf(::MutualMatchesViewModel)
     viewModelOf(::NewlyJoinedViewModel)
+    viewModelOf(::ContactViewsViewModel)
+    viewModelOf(::ContactsViewedByMeViewModel)
 }

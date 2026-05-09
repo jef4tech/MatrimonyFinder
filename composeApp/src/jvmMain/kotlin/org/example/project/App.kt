@@ -79,6 +79,8 @@ fun App() {
                         onNavigateToProfileViewedByMe = { navController.navigate(ProfileViewedByMeRoute) },
                         onNavigateToMutualMatches = { navController.navigate(MutualMatchesRoute) },
                         onNavigateToNewlyJoined = { navController.navigate(NewlyJoinedRoute) },
+                        onNavigateToContactViews = { navController.navigate(ContactViewsRoute) },
+                        onNavigateToContactsViewedByMe = { navController.navigate(ContactsViewedByMeRoute) },
                         onLogout = { handleLogout() }
                     )
                 }
@@ -122,6 +124,22 @@ fun App() {
                     NewlyJoinedScreen(
                         token = loggedInUser?.token ?: "",
                         candidateId = loggedInUser?.candidates?.firstOrNull()?.id ?: "",
+                        onBack = { navController.popBackStack() },
+                        onLogout = { handleLogout() }
+                    )
+                }
+
+                composable<ContactViewsRoute> {
+                    ContactViewsScreen(
+                        token = loggedInUser?.token ?: "",
+                        onBack = { navController.popBackStack() },
+                        onLogout = { handleLogout() }
+                    )
+                }
+
+                composable<ContactsViewedByMeRoute> {
+                    ContactsViewedByMeScreen(
+                        token = loggedInUser?.token ?: "",
                         onBack = { navController.popBackStack() },
                         onLogout = { handleLogout() }
                     )

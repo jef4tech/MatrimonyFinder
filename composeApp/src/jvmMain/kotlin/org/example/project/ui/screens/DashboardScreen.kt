@@ -18,6 +18,8 @@ fun DashboardScreen(
     onNavigateToProfileViewedByMe: () -> Unit,
     onNavigateToMutualMatches: () -> Unit,
     onNavigateToNewlyJoined: () -> Unit,
+    onNavigateToContactViews: () -> Unit,
+    onNavigateToContactsViewedByMe: () -> Unit,
     onLogout: () -> Unit
 ) {
     Scaffold(
@@ -69,9 +71,22 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
-                    title = "Viewed By Me",
+                    title = "Profiles Viewed By Me",
                     modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToProfileViewedByMe
+                )
+                DashboardCard(
+                    title = "Contact Views",
+                    modifier = Modifier.weight(1f).height(150.dp),
+                    onClick = onNavigateToContactViews
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                DashboardCard(
+                    title = "Contacts Viewed By Me",
+                    modifier = Modifier.weight(1f).height(150.dp),
+                    onClick = onNavigateToContactsViewedByMe
                 )
                 Spacer(modifier = Modifier.weight(1f))
             }
@@ -107,6 +122,8 @@ fun DashboardScreenPreview() {
             onNavigateToProfileViewedByMe = {},
             onNavigateToMutualMatches = {},
             onNavigateToNewlyJoined = {},
+            onNavigateToContactViews = {},
+            onNavigateToContactsViewedByMe = {},
             onLogout = {}
         )
     }

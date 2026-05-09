@@ -5,6 +5,8 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import org.example.project.data.remote.models.*
 
@@ -23,6 +25,28 @@ class MatrimonyRepositoryImpl(
 ) : MatrimonyRepository {
     companion object {
         private const val BASE_URL = "https://finder-api.chavaramatrimony.com"
+        private const val CLIENT_NAME_PROFILE_VIEWS = "Profile Views"
+        private const val CLIENT_NAME_PROFILES_VIEWED_BY_ME = "Profiles Viewed By Me"
+    }
+
+    private var cachedClientCounts: List<CandidateViewCount>? = null
+    private val countsMutex = Mutex()
+
+    private suspend fun ensureClientCounts(token: String): List<CandidateViewCount> {
+        cachedClientCounts?.let { return it }
+        return countsMutex.withLock {
+            cachedClientCounts ?: run {
+                val list = getCandidateViewCounts(token).getOrThrow()
+                cachedClientCounts = list
+                list
+            }
+        }
+    }
+
+    private suspend fun resolveClientCode(token: String, name: String): String {
+        val list = ensureClientCounts(token)
+        return list.firstOrNull { it.name == name }?.code
+            ?: throw IllegalStateException("No client code found for '$name'")
     }
 
     override suspend fun login(request: LoginRequest): Result<LoginResponse> {
@@ -80,7 +104,8 @@ class MatrimonyRepositoryImpl(
 
     override suspend fun getProfileViews(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
         return try {
-            val response = client.put("$BASE_URL/CandidateView/v1/list/client/c810eefd-035c-4362-b2c8-0c1415563bd7") {
+            val code = resolveClientCode(token, CLIENT_NAME_PROFILE_VIEWS)
+            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Bearer $token")
                 setBody(request)
@@ -98,8 +123,8 @@ class MatrimonyRepositoryImpl(
 
     override suspend fun getProfileViewedByMe(clientId: String, token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse> {
         return try {
-            val clientIdParam = "13267262-7f38-44a8-bd96-0f92259dae39"
-            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$clientIdParam") {
+            val code = resolveClientCode(token, CLIENT_NAME_PROFILES_VIEWED_BY_ME)
+            val response = client.put("$BASE_URL/CandidateView/v1/list/client/$code") {
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Bearer $token")
                 setBody(request)

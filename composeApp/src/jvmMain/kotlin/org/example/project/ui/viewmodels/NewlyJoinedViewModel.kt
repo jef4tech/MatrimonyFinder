@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class NewlyJoinedState(
-    val matches: List<MatchItem> = emptyList(),
+    val matches: List<CandidateProfile> = emptyList(),
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
     val errorMessage: String? = null,

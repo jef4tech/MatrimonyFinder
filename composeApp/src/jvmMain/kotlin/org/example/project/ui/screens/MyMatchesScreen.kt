@@ -94,7 +94,7 @@ fun MyMatchesScreenContent(
     title: String = "My Matches",
     isLoading: Boolean,
     errorMessage: String?,
-    matches: List<MatchItem>?,
+    matches: List<CandidateProfile>?,
     isLoadingMore: Boolean = false,
     hasMore: Boolean = false,
     onLoadMore: () -> Unit = {},
@@ -179,7 +179,7 @@ fun MyMatchesScreenContent(
 }
 
 @Composable
-fun MatchCard(match: MatchItem) {
+fun MatchCard(match: CandidateProfile) {
     var showDialog by remember { mutableStateOf(false) }
     val photoUrl = match.photos?.candidatePhotos?.firstOrNull()?.displayPhotoUrl
 
@@ -213,7 +213,10 @@ fun MatchCard(match: MatchItem) {
             location = listOfNotNull(match.workingState, match.workingCountry).joinToString(", ").takeIf { it.isNotBlank() },
             isPremium = match.isPremium ?: false,
             isOnline = match.isOnline ?: false,
-            message = match.messageStatus?.message
+            message = match.messageStatus?.message,
+            complexion = match.complexion,
+            maritalStatus = match.maritalStatus,
+            genderCode = match.genderCode
         )
         FullScreenImageDialog(
             url = photoUrl,
@@ -266,7 +269,10 @@ data class CandidateDetails(
     val isPremium: Boolean,
     val isOnline: Boolean,
     val message: String? = null,
-    val activityLog: List<ActivityEntry>? = null
+    val activityLog: List<ActivityEntry>? = null,
+    val complexion: String? = null,
+    val maritalStatus: String? = null,
+    val genderCode: String? = null
 )
 
 data class ActivityEntry(
@@ -346,6 +352,18 @@ fun FullScreenImageDialog(url: String, details: CandidateDetails?, onDismiss: ()
                             Text(text = "Profession: ${details.profession ?: "N/A"}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(text = "Location: ${details.location ?: "N/A"}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            if (!details.complexion.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(text = "Complexion: ${details.complexion}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            }
+                            if (!details.maritalStatus.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(text = "Marital Status: ${details.maritalStatus}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            }
+                            if (!details.genderCode.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(text = "Gender: ${details.genderCode}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            }
                             if (!details.message.isNullOrBlank()) {
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(text = "Message: ${details.message}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
@@ -396,7 +414,7 @@ fun MyMatchesScreenPreview() {
             isLoading = false,
             errorMessage = null,
             matches = listOf(
-                MatchItem(
+                CandidateProfile(
                     candidateId = "123",
                     profileId = "jeffjhin",
                     age = 28,
@@ -409,7 +427,7 @@ fun MyMatchesScreenPreview() {
                     workingState = "Kerala",
                     workingCountry = "India"
                 ),
-                MatchItem(
+                CandidateProfile(
                     candidateId = "124",
                     profileId = "CHV67890",
                     age = 25,

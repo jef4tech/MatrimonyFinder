@@ -65,22 +65,28 @@ val appModule = module {
                     refreshTokens {
                         val prefs = Preferences.userRoot().node("org.example.project.MatrimonyFinder")
                         val jsonStr = prefs.get("auth_user", null)
-                        val oldRefreshToken = if (jsonStr != null) {
+                        
+                        var oldToken: String? = null
+                        var oldRefreshToken: String? = null
+
+                        if (jsonStr != null) {
                             try {
                                 val json = Json { ignoreUnknownKeys = true }
                                 val response = json.decodeFromString<LoginResponse>(jsonStr)
-                                response.refreshToken
-                            } catch (e: Exception) { null }
-                        } else null
+                                oldToken = response.token
+                                oldRefreshToken = response.refreshToken
+                            } catch (e: Exception) { }
+                        }
 
-                        if (oldRefreshToken.isNullOrEmpty()) {
+                        if (oldRefreshToken.isNullOrEmpty() || oldToken.isNullOrEmpty()) {
                             return@refreshTokens null
                         }
 
                         try {
-                            val refreshResponse = client.get("Auth/refresh-token") {
+                            val refreshResponse = client.post("Auth/refresh-token") {
                                 markAsRefreshTokenRequest()
-                                header(HttpHeaders.Authorization, "Bearer $oldRefreshToken")
+                                contentType(ContentType.Application.Json)
+                                setBody("""{"token":"$oldToken","refreshToken":"$oldRefreshToken"}""")
                             }
 
                             if (refreshResponse.status == HttpStatusCode.OK) {

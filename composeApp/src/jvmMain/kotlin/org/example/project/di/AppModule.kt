@@ -7,9 +7,11 @@ import io.ktor.client.plugins.auth.*
 import io.ktor.client.plugins.auth.providers.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.client.call.body
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.example.project.data.remote.models.LoginResponse
 import org.example.project.data.repository.MatrimonyRepository
@@ -46,16 +48,65 @@ val appModule = module {
                     loadTokens {
                         val prefs = Preferences.userRoot().node("org.example.project.MatrimonyFinder")
                         val jsonStr = prefs.get("auth_user", null)
-                        val token = if (jsonStr != null) {
+                        val tokenInfo = if (jsonStr != null) {
                             try {
                                 val json = Json { ignoreUnknownKeys = true }
                                 val response = json.decodeFromString<LoginResponse>(jsonStr)
-                                response.token
+                                Pair(response.token, response.refreshToken)
                             } catch (e: Exception) { null }
                         } else null
 
-                        token?.let { BearerTokens(it, "") }
+                        val token = tokenInfo?.first
+                        val refreshToken = tokenInfo?.second ?: ""
+                        
+                        token?.let { BearerTokens(it, refreshToken) }
                     }
+                    
+                    refreshTokens {
+                        val prefs = Preferences.userRoot().node("org.example.project.MatrimonyFinder")
+                        val jsonStr = prefs.get("auth_user", null)
+                        val oldRefreshToken = if (jsonStr != null) {
+                            try {
+                                val json = Json { ignoreUnknownKeys = true }
+                                val response = json.decodeFromString<LoginResponse>(jsonStr)
+                                response.refreshToken
+                            } catch (e: Exception) { null }
+                        } else null
+
+                        if (oldRefreshToken.isNullOrEmpty()) {
+                            return@refreshTokens null
+                        }
+
+                        try {
+                            val refreshResponse = client.get("Auth/refresh-token") {
+                                markAsRefreshTokenRequest()
+                                header(HttpHeaders.Authorization, "Bearer $oldRefreshToken")
+                            }
+
+                            if (refreshResponse.status == HttpStatusCode.OK) {
+                                val responseBody = refreshResponse.body<LoginResponse>()
+                                val newToken = responseBody.token ?: return@refreshTokens null
+                                val newRefreshToken = responseBody.refreshToken ?: oldRefreshToken
+
+                                // Update preferences with new tokens
+                                if (jsonStr != null) {
+                                    try {
+                                        val json = Json { ignoreUnknownKeys = true }
+                                        val oldResponse = json.decodeFromString<LoginResponse>(jsonStr)
+                                        val updatedResponse = oldResponse.copy(token = newToken, refreshToken = newRefreshToken)
+                                        prefs.put("auth_user", json.encodeToString(LoginResponse.serializer(), updatedResponse))
+                                    } catch (e: Exception) { }
+                                }
+
+                                BearerTokens(newToken, newRefreshToken)
+                            } else {
+                                null
+                            }
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    
                     sendWithoutRequest { true }
                 }
             }
@@ -64,6 +115,7 @@ val appModule = module {
 
     singleOf(::MatrimonyRepositoryImpl) { bind<MatrimonyRepository>() }
     
+    viewModelOf(::DashboardViewModel)
     viewModelOf(::LoginViewModel)
     viewModelOf(::MyMatchesViewModel)
     viewModelOf(::WhoViewedMeViewModel)

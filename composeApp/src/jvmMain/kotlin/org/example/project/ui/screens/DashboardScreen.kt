@@ -11,6 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import org.example.project.data.remote.models.DashboardInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,8 +27,43 @@ fun DashboardScreen(
     onNavigateToNewlyJoined: () -> Unit,
     onNavigateToContactViews: () -> Unit,
     onNavigateToContactsViewedByMe: () -> Unit,
+    onLogout: () -> Unit,
+    viewModel: DashboardViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadDashboardData()
+    }
+
+    DashboardScreenContent(
+        infoList = state.dashboardInfo ?: emptyList(),
+        onNavigateToMyMatches = onNavigateToMyMatches,
+        onNavigateToWhoViewedMe = onNavigateToWhoViewedMe,
+        onNavigateToProfileViewedByMe = onNavigateToProfileViewedByMe,
+        onNavigateToMutualMatches = onNavigateToMutualMatches,
+        onNavigateToNewlyJoined = onNavigateToNewlyJoined,
+        onNavigateToContactViews = onNavigateToContactViews,
+        onNavigateToContactsViewedByMe = onNavigateToContactsViewedByMe,
+        onLogout = onLogout
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DashboardScreenContent(
+    infoList: List<DashboardInfo>,
+    onNavigateToMyMatches: () -> Unit,
+    onNavigateToWhoViewedMe: () -> Unit,
+    onNavigateToProfileViewedByMe: () -> Unit,
+    onNavigateToMutualMatches: () -> Unit,
+    onNavigateToNewlyJoined: () -> Unit,
+    onNavigateToContactViews: () -> Unit,
+    onNavigateToContactsViewedByMe: () -> Unit,
     onLogout: () -> Unit
 ) {
+    fun getCount(name: String): Int? = infoList.find { it.name == name }?.count
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -45,14 +85,26 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Row {
+                infoList.map {
+                    DashboardCard(
+                        title = it.name ?: "Unknown",
+                        count = it.count ?: 0,
+                        modifier = Modifier.weight(1f).height(100.dp).padding(8.dp),
+                        onClick = {}
+                    )
+                }
+            }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
                     title = "My Matches",
+                    count = getCount("My Matches"),
                     modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToMyMatches
                 )
                 DashboardCard(
                     title = "Who Viewed Me",
+                    count = getCount("Profile Views"),
                     modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToWhoViewedMe
                 )
@@ -61,11 +113,13 @@ fun DashboardScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
                     title = "Mutual Matches",
+                    count = getCount("Mutual Matches"),
                     modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToMutualMatches
                 )
                 DashboardCard(
                     title = "Newly Joined Profiles",
+                    count = getCount("Newly Joined"),
                     modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToNewlyJoined
                 )
@@ -74,11 +128,13 @@ fun DashboardScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
                     title = "Profiles Viewed By Me",
+                    count = getCount("Profiles Viewed By Me"),
                     modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToProfileViewedByMe
                 )
                 DashboardCard(
                     title = "Contact Views",
+                    count = getCount("Contact Views"),
                     modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToContactViews
                 )
@@ -87,6 +143,7 @@ fun DashboardScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DashboardCard(
                     title = "Contacts Viewed By Me",
+                    count = getCount("Contacts Viewed By Me"),
                     modifier = Modifier.weight(1f).height(150.dp),
                     onClick = onNavigateToContactsViewedByMe
                 )
@@ -98,18 +155,28 @@ fun DashboardScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardCard(title: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun DashboardCard(title: String, count: Int? = null, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Card(
         modifier = modifier,
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                if (count != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = count.toString(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }
@@ -118,7 +185,11 @@ fun DashboardCard(title: String, modifier: Modifier = Modifier, onClick: () -> U
 @Composable
 fun DashboardScreenPreview() {
     MaterialTheme {
-        DashboardScreen(
+        DashboardScreenContent(
+            infoList = listOf(
+                DashboardInfo(name = "Profile Views", count = 1057),
+                DashboardInfo(name = "Contact Views", count = 13)
+            ),
             onNavigateToMyMatches = {},
             onNavigateToWhoViewedMe = {},
             onNavigateToProfileViewedByMe = {},

@@ -20,6 +20,7 @@ interface MatrimonyRepository {
     suspend fun getCandidateViewCounts(token: String): Result<List<CandidateViewCount>>
     suspend fun getContactViews(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse>
     suspend fun getContactsViewedByMe(token: String, request: ProfileViewsRequest): Result<ProfileViewsResponse>
+    suspend fun getDashboardData(): Result<DashboardResponse>
 }
 
 class MatrimonyRepositoryImpl(
@@ -118,6 +119,11 @@ class MatrimonyRepositoryImpl(
             client.get("CandidateView/client/count") {
                 header("accept", "application/octet-stream")
             }
+        }
+
+    override suspend fun getDashboardData(): Result<DashboardResponse> =
+        safeApiCall {
+            client.get("Dashboard/v1/candidate")
         }
 
     private suspend inline fun <reified T> safeApiCall(apiCall: suspend () -> HttpResponse): Result<T> {

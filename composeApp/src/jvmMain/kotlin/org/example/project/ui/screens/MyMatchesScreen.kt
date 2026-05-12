@@ -12,6 +12,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -103,29 +104,17 @@ fun MyMatchesScreenContent(
 ) {
     Scaffold(
         topBar = {
-            @OptIn(ExperimentalMaterial3Api::class)
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
-                    }
-                },
-                actions = {
-                    TextButton(onClick = onLogout) {
-                        Text("Logout", color = MaterialTheme.colorScheme.onPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+            PremiumTopAppBar(
+                title = title,
+                onBack = onBack,
+                onLogout = onLogout
             )
-        }
+        },
+        containerColor = BaseBlack
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding).background(BaseBlack)) {
             if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = ChampagneGold)
             } else if (errorMessage != null) {
                 Text(
                     text = errorMessage,
@@ -135,6 +124,7 @@ fun MyMatchesScreenContent(
             } else if (matches.isNullOrEmpty()) {
                 Text(
                     text = "No matches found.",
+                    style = BodyLg,
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
@@ -154,10 +144,11 @@ fun MyMatchesScreenContent(
                 }
                 LazyVerticalGrid(
                     state = gridState,
-                    columns = GridCells.Adaptive(minSize = 200.dp),
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    columns = GridCells.Adaptive(minSize = 250.dp),
+                    contentPadding = PaddingValues(24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalArrangement = Arrangement.spacedBy(48.dp),
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     items(matches) { match ->
                         MatchCard(match)
@@ -168,7 +159,7 @@ fun MyMatchesScreenContent(
                                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator()
+                                CircularProgressIndicator(color = ChampagneGold)
                             }
                         }
                     }
@@ -183,24 +174,11 @@ fun MatchCard(match: CandidateProfile) {
     var showDialog by remember { mutableStateOf(false) }
     val photoUrl = match.photos?.candidatePhotos?.firstOrNull()?.displayPhotoUrl
 
-    Card(
-        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable {
-            if (!photoUrl.isNullOrEmpty()) {
-                showDialog = true
-            }
-        }
-    ) {
+    GalleryProfileCard(match = match, onClick = {
         if (!photoUrl.isNullOrEmpty()) {
-            AsyncImage(
-                url = photoUrl,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color.LightGray)
-            )
+            showDialog = true
         }
-    }
+    })
 
     if (showDialog && !photoUrl.isNullOrEmpty()) {
         val details = CandidateDetails(

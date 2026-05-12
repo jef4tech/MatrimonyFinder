@@ -74,6 +74,8 @@ fun App() {
 
                 composable<DashboardRoute> {
                     DashboardScreen(
+                        token = loggedInUser?.token ?: "",
+                        candidateId = loggedInUser?.candidates?.firstOrNull()?.id ?: "",
                         onNavigateToMyMatches = { navController.navigate(MyMatchesRoute) },
                         onNavigateToWhoViewedMe = { navController.navigate(WhoViewedMeRoute) },
                         onNavigateToProfileViewedByMe = { navController.navigate(ProfileViewedByMeRoute) },

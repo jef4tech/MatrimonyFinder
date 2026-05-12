@@ -33,28 +33,17 @@ fun ContactViewsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Contact Views") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
-                    }
-                },
-                actions = {
-                    TextButton(onClick = onLogout) {
-                        Text("Logout", color = MaterialTheme.colorScheme.onPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+            PremiumTopAppBar(
+                title = "Contact Views",
+                onBack = onBack,
+                onLogout = onLogout
             )
-        }
+        },
+        containerColor = BaseBlack
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding).background(BaseBlack)) {
             if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = ChampagneGold)
             } else if (state.errorMessage != null) {
                 Text(
                     text = state.errorMessage!!,
@@ -64,6 +53,7 @@ fun ContactViewsScreen(
             } else if (state.views.isEmpty()) {
                 Text(
                     text = "No one has viewed your contact details yet.",
+                    style = BodyLg,
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
@@ -85,10 +75,11 @@ fun ContactViewsScreen(
                 }
                 LazyVerticalGrid(
                     state = gridState,
-                    columns = GridCells.Adaptive(minSize = 200.dp),
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    columns = GridCells.Adaptive(minSize = 250.dp),
+                    contentPadding = PaddingValues(24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalArrangement = Arrangement.spacedBy(48.dp),
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     items(state.views) { view ->
                         WhoViewedCard(view)
@@ -99,7 +90,7 @@ fun ContactViewsScreen(
                                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator()
+                                CircularProgressIndicator(color = ChampagneGold)
                             }
                         }
                     }
